@@ -1,10 +1,10 @@
 # octoprint-stream-overlay
-1. A source file for an OBS Studio browser source that pulls Octoprint info and a webcam stream into a single page.
-2. https://{OCTOPRINT-HOSTNAME}/static/overlay.html?baseurl=https://{OCTOPRINT-HOSTNAME}/ to verify that it works.
-3. Add the above URL to a Browser source in OBS Studio. Make sure to set the browser size to 1920x1080.
+A source file for an OBS Studio browser source that pulls Octoprint info and a webcam stream into a single page.
 
 ## Installation
-Place overlay.html into 'oprint/lib/python2.7/site-packages/octoprint/static/overlay.html' of your Octoprint directory.
+1. Place overlay.html into 'oprint/lib/python2.7/site-packages/octoprint/static/overlay.html' of your Octoprint directory.
+2. https://{OCTOPRINT-HOSTNAME}/static/overlay.html?baseurl=https://{OCTOPRINT-HOSTNAME}/ to verify that it works.
+3. Add the above URL to a Browser source in OBS Studio. Make sure to set the browser size to 1920x1080.
 
 ## Thumbnails
 For the thumbnail generation, you need to enable thumbnail in your PrusaSlicer profile for your printer.
