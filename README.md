@@ -3,7 +3,7 @@ A source file for an OBS Studio browser source that pulls Octoprint info and a w
 
 ## Installation
 1. Place overlay.html into 'oprint/lib/python2.7/site-packages/octoprint/static/overlay.html' of your Octoprint directory.
-2. https://{OCTOPRINT-HOSTNAME}/static/overlay.html?baseurl=https://{OCTOPRINT-HOSTNAME}/ to verify that it works.
+2. https://$OCTOPRINT/static/overlay.html?baseurl=https://$OCTOPRINT/ to verify that it works.
 3. Add the above URL to a Browser source in OBS Studio. Make sure to set the browser size to 1920x1080.
 
 ## Thumbnails
