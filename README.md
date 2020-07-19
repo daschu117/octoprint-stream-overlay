@@ -12,7 +12,7 @@ For the thumbnail generation, you need to enable thumbnail in your PrusaSlicer p
 2. Go to Help -> Show Configuration Folder
 3. Open "printer"
 4. Open your custom printer profile
-5. Add "thumbnails = thumbnails = 16x16,220x124,480x360" near line 68
+5. Add "thumbnails = 16x16,220x124,480x360" near line 68
 6. Install the "PrusaSlicer Thumbnails" plugin for Octoprint https://github.com/jneilliii/OctoPrint-PrusaSlicerThumbnails
 
 ## Caveats
