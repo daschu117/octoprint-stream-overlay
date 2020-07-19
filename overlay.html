@@ -1,0 +1,228 @@
+<html>
+<head>
+<title>OctoPrint Overlay</title>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+<script src="/static/js/lib/jquery/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+<script src="/static/js/lib/lodash.min.js"></script>
+<script type="text/javascript" src="/static/webassets/packed_client.js"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+const baseurl = urlParams.get('baseurl');
+OctoPrint.options.baseurl = baseurl;
+
+function formatTime(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.round(seconds % 60);
+  return [
+    h,
+    m > 9 ? m : (h ? '0' + m : m || '0'),
+    s > 9 ? s : '0' + s
+  ].filter(Boolean).join(':');
+};
+
+function myUpdate () {
+	OctoPrint.job.get()
+	    .done(function(response) {
+        document.getElementById("filename").innerHTML = response.job.file.name;
+        var thumbnail = response.job.file.name.replace("gcode", "png")
+        document.getElementById("thumbnail").src = "/plugin/prusaslicerthumbnails/thumbnail/" + thumbnail;
+        var completion = Math.floor(response.progress.completion);
+        document.getElementById("completion").innerHTML = completion +"%";
+        document.getElementById("progress-bar").style.width = completion +"%";
+        var estimatedPrintTime = response.job.estimatedPrintTime;
+        document.getElementById("estimatedPrintTime").innerHTML = formatTime(estimatedPrintTime);
+        var printTime = response.progress.printTime;
+        document.getElementById("printTime").innerHTML = formatTime(printTime);
+        var printTimeLeft = response.progress.printTimeLeft;
+        document.getElementById("printTimeLeft").innerHTML = formatTime(printTimeLeft);
+    });
+    OctoPrint.printer.getFullState()
+        .done (function(response) {
+        document.getElementById("state").innerHTML = response.state.text;
+    });
+};
+
+window.onload = function() {
+    setInterval(myUpdate,1000);
+
+
+
+
+
+
+    var graphDiv = document.getElementById('tempgraph');
+    var data = [ { 
+            y:[0],
+            legendgroup: 'tool0',
+            line: {color: '#dc3545'},
+            type: 'line',
+            mode: 'lines',
+            name: 'Actual T0: 0&deg;C'
+        }, { 
+            y:[0],
+            legendgroup: 'tool0',
+            line: {color: '#F88'},
+            type: 'line',
+            mode: 'lines',
+            name: 'Target T0: 0&deg;C'
+        }, { 
+            y:[0],
+            legendgroup: 'bed',
+            line: {color: '#007bff'},
+            type: 'line',
+            mode: 'lines',
+            name: 'Actual Bed: 0&deg;C'
+        }, { 
+            y:[0],
+            legendgroup: 'bed',
+            line: {color: '#88F'},
+            type: 'line',
+            mode: 'lines',
+            name: 'Target Bed: 0&deg;C'
+        }];
+    var layout = {
+        showlegend: true,
+        legend: {
+            font: {
+                color: '#f8f9fa'
+            },
+            orientation: 'h',
+            x: 0,
+            xanchor: 'left',
+            y: -0.05,
+            yanchor: 'top'
+        },
+        margin: {
+            l: 40,
+            r: 0,
+            t: 10,
+            b: 0
+        },
+        xaxis: {
+            color: '#f8f9fa',
+            rangemode: 'reversed'
+        },
+        yaxis: {
+            color: '#f8f9fa',
+            range:[0,300]
+        },
+        width: 460,
+        height: 360,
+        paper_bgcolor: '#343a40',
+        plot_bgcolor: '#343a40'
+    };
+    var options = {
+        displayModeBar: false,
+        staticPlot: true
+    };
+    var cnt = 0;
+    Plotly.newPlot(graphDiv, data, layout, options);
+    setInterval(function(){
+        OctoPrint.printer.getFullState()
+            .done (function(response) {
+            result = response.temperature.tool0.actual;
+            var tool0actual = response.temperature.tool0.actual;
+            var tool0target = response.temperature.tool0.target;
+            var bedactual = response.temperature.bed.actual;
+            var bedtarget = response.temperature.bed.target;
+            Plotly.extendTraces('tempgraph', { y:[[tool0actual]] }, [0]);
+            Plotly.extendTraces('tempgraph', { y:[[tool0target]] }, [1])
+            Plotly.extendTraces('tempgraph', { y:[[bedactual]] }, [2])
+            Plotly.extendTraces('tempgraph', { y:[[bedtarget]] }, [3])
+            var layout_update = {};
+            Plotly.update('tempgraph', {name: 'Actual T0: ' + [[tool0actual]] + '&deg;C'}, layout_update, 0);
+            Plotly.update('tempgraph', {name: 'Target T0: ' + [[tool0target]] + '&deg;C'}, layout_update, 1);
+            Plotly.update('tempgraph', {name: 'Actual Bed: ' + [[bedactual]] + '&deg;C'}, layout_update, 2);
+            Plotly.update('tempgraph', {name: 'Target Bed: ' + [[bedtarget]] + '&deg;C'}, layout_update, 3);
+        });
+        cnt++;
+        if(cnt > 1800 ) {
+            Plotly.relayout('tempgraph',{
+                xaxis: {
+                    range: [cnt-1800,cnt]
+                    }
+                });
+        };
+    },1000);
+
+};
+
+</script>
+    <style>
+	#footer, #header {
+	  position: absolute;
+      right: 0px;
+	  width: 1440px;
+	  margin-left: auto;
+	  margin-right: auto;
+	  text-align: center;
+	}
+	#footer {
+		bottom: 0px;
+	}
+	#header {
+		top: 0px;
+	}
+  </style>
+</head>
+<body class="bg-dark text-light">
+<div style="width: 480px" class="text-wrap text-break text-center">
+    <div class="px-4 py-2">
+        <div class="row">
+            <div class="col border py-3">
+                <b>State:</b>&nbsp;<br />
+                <span id="state"></span><br />
+            </div>
+            <div class="col border py-3">
+                <b>Progress:</b>&nbsp;
+                <span id="completion"></span><br />
+                <div class="progress" style="height:20px">
+                    <div id="progress-bar" class="progress-bar text-black" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col border py-3">
+                <b>Elapsed:</b>&nbsp;<br />
+                <span id="printTime"></span><br />
+            </div>
+            <div class="col border py-3">
+                <b>Remaining:</b>&nbsp;<br />
+                <span id="printTimeLeft"></span><br />
+            </div>
+            <div class="col border py-3">
+                <b>Estimated:</b>&nbsp;<br />
+                <span id="estimatedPrintTime"></span><br />
+            </div>
+        </div>
+    </div>
+    <div id="tempgraph" class="border mx-2" style="width:464px;">
+    </div>
+    <img id="thumbnail" style="position: fixed; left: 0px; bottom: 0px" class="mx-auto" src="/static/img/graph-background.png" />
+</div>
+<div>
+    <img src="/webcam/?action=stream" style="width: 1440px; position: fixed; right:0px; top: 0px;" />
+</div>
+<div id="header">
+    <div id="filename" class="h3 d-inline-block px-3 py-2 m-0 rounded bg-dark text-monospace">Let's Print Some Stuff!</div>
+</div>
+<div id="footer">
+    <div id="clock" class="h3 d-inline-block px-3 py-2 m-0 rounded bg-dark text-monospace"></div>
+</div>
+
+<script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+<script>
+
+	var clock = document.getElementById("clock");
+
+	setInterval(function() {
+		clock.innerText = moment().format('');
+	}, 1000);
+
+</script>
+</body>
+</html>
