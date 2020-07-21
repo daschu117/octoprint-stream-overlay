@@ -12,6 +12,8 @@ const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
 const baseurl = urlParams.get('baseurl');
 OctoPrint.options.baseurl = baseurl;
+const apikey = urlParams.get('apikey');
+OctoPrint.options.apikey = apikey;
 
 function formatTime(seconds) {
   const h = Math.floor(seconds / 3600);
