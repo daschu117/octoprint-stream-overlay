@@ -5,6 +5,7 @@ A source file for an OBS Studio browser source that pulls Octoprint info and a w
 1. Place overlay.html into 'oprint/lib/python2.7/site-packages/octoprint/static/overlay.html' of your Octoprint directory.
 2. Browse to https://$OCTOPRINT/static/overlay.html?baseurl=https://$OCTOPRINT/&apikey=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx to verify that it works.
 3. Add the above URL to a Browser source in OBS Studio. Make sure to set the browser size to 1920x1080.
+4. If you're not using a valid certificate with HTTPS, you might need to change the URL scheme to HTTP.
 
 ## Thumbnails
 For the thumbnail generation, you need to enable thumbnail in your PrusaSlicer profile for your printer.
