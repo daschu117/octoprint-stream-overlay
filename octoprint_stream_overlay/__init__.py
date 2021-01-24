@@ -1,45 +1,27 @@
 # coding=utf-8
 from __future__ import absolute_import
-
-### (Don't forget to remove me)
-# This is a basic skeleton for your plugin's __init__.py. You probably want to adjust the class name of your plugin
-# as well as the plugin mixins it's subclassing from. This is really just a basic skeleton to get you started,
-# defining your plugin as a template plugin, settings and asset plugin. Feel free to add or remove mixins
-# as necessary.
-#
-# Take a look at the documentation on what other plugin mixins are available.
-
 import octoprint.plugin
 
-class StreamOverlayPlugin(
-	octoprint.plugin.SettingsPlugin,
-	octoprint.plugin.TemplatePlugin,
-	octoprint.plugin.UiPlugin):
 
-	def get_settings_defaults(self):
-		return dict(
-			hsize=False,
-			vsize=False
-		)
+class StreamOverlayPlugin(octoprint.plugin.UiPlugin, octoprint.plugin.TemplatePlugin):
 
-	def get_template_configs(self):
-		return [
-			dict(type="navbar", custom_bindings=False),
-		]
-
-	def get_template_vars(self):
-		return dict(
-			hsize=self._settings.get(["hsize"]),
-			vsize=self._settings.get(["vsize"])
-		)
+	def _get_widget(self, name):
+		# TODO: security check this
+		return "widgets/%s.jinja2" % name
 
 	def will_handle_ui(self, request):
+		print(f"uhh {request.args}")
+		self._logger.info(f"uhhx {request.args}")
 		return 'stream_overlay' in request.args
 
 	def on_ui_render(self, now, request, render_kwargs):
 		from flask import make_response, render_template
-		render_kwargs['settings'] = self._settings
-		return make_response(render_template("stream_overlay.jinja2", **render_kwargs))
+		#render_kwargs['settings'] = self._settings
+		widget = request.args['stream_overlay']
+		if widget and widget != 'default':
+			t = self._get_widget(widget)
+			return make_response(render_template(t, **render_kwargs))
+		return make_response(render_template("stream_overlay_main.jinja2", **render_kwargs))
 
 	def get_update_information(self):
 		# https://docs.octoprint.org/en/master/bundledplugins/softwareupdate.html

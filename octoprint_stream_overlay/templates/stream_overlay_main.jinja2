@@ -10,27 +10,45 @@
 		<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 		<script>
 		$(function() {
-			function StreamOverlay() {
+			var self = this;
 
+			OctoPrint.options.baseurl = window.location.origin;
+			var apikey = new URLSearchParams(window.location.search).get('apikey')
+			OctoPrint.options.apikey = apikey;
+
+			function formatTime(seconds) {
+			  const h = Math.floor(seconds / 3600);
+			  const m = Math.floor((seconds % 3600) / 60);
+			  const s = Math.round(seconds % 60);
+			  return [
+				h,
+				m > 9 ? m : (h ? '0' + m : m || '0'),
+				s > 9 ? s : '0' + s
+			  ].filter(Boolean).join(':');
+			};
+
+			var checkJob = function() {
+				OctoPrint.job.get().done(function(r) {
+					if(!'job' in r)
+						return;
+					document.getElementById("filename").innerHTML = r.job.file.name;
+				});
 			}
 
-const queryString = window.location.search;
-const urlParams = new URLSearchParams(queryString);
-const baseurl = urlParams.get('baseurl');
-OctoPrint.options.baseurl = baseurl || window.location.origin;
-const apikey = urlParams.get('apikey');
-OctoPrint.options.apikey = apikey;
+			self.watchJobs = function() {
+				setInterval(checkJob,1000);
+			}
 
-function formatTime(seconds) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.round(seconds % 60);
-  return [
-    h,
-    m > 9 ? m : (h ? '0' + m : m || '0'),
-    s > 9 ? s : '0' + s
-  ].filter(Boolean).join(':');
-};
+			self.loadWebcam = function() {
+				var url = self.settings.webcam.streamUrl;
+				document.getElementById('webcam').src = url;
+			}
+
+			OctoPrint.settings.get().done(function(r) {
+				self.settings = r;
+				self.watchJobs();
+				self.loadWebcam();
+			});
 
 function myUpdate () {
 	OctoPrint.job.get().done(function(response) {
@@ -53,9 +71,8 @@ function myUpdate () {
     });
 };
 
-window.onload = function() {
-    setInterval(myUpdate,1000);
-
+var junk = function() {
+	return;
     var graphDiv = document.getElementById('tempgraph');
     var data = [ {
             y:[0],
@@ -123,7 +140,7 @@ window.onload = function() {
     };
     var cnt = 0;
     Plotly.newPlot(graphDiv, data, layout, options);
-    setInterval(function(){
+    function bunk(){
         OctoPrint.printer.getFullState()
             .done (function(response) {
             result = response.temperature.tool0.actual;
@@ -149,7 +166,7 @@ window.onload = function() {
                     }
                 });
         };
-    },1000);
+    }
 
 };
 		});
@@ -177,60 +194,68 @@ window.onload = function() {
 	  </style>
 	</head>
 <body class="bg-dark text-light">
-<div style="width: 480px" class="text-wrap text-break text-center">
-	<div class="px-4 py-2">
-		<div class="row">
-			<div class="col border py-3">
-				<b>State:</b>&nbsp;<br />
-				<span id="state"></span><br />
-			</div>
-			<div class="col border py-3">
-				<b>Progress:</b>&nbsp;
-				<span id="completion"></span><br />
-				<div class="progress" style="height:20px">
-					<div id="progress-bar" class="progress-bar text-black" role="progressbar" style="width: 0%"></div>
+	<div class="container-fluid">
+		<div id="header">
+			<div id="filename" class="h3 d-inline-block px-3 py-2 m-0 rounded bg-dark text-monospace">Let's Print Some Stuff!</div>
+		</div>
+
+		<div class="row-fluid">
+			<div class="span4">
+				<div class="row">
+					<div class="col border md-3">
+						<b>State:</b>&nbsp;<br />
+						<span id="state"></span><br />
+					</div>
+					<div class="col border md-3">
+						<b>Progress:</b>&nbsp;
+						<span id="completion"></span><br />
+						<div class="progress" style="height:20px">
+							<div id="progress-bar" class="progress-bar text-black" role="progressbar" style="width: 0%"></div>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col border md-3">
+						<b>Elapsed:</b>&nbsp;<br />
+						<span id="printTime"></span><br />
+					</div>
+					<div class="col border md-3">
+						<b>Remaining:</b>&nbsp;<br />
+						<span id="printTimeLeft"></span><br />
+					</div>
+					<div class="col border md-3">
+						<b>Estimated:</b>&nbsp;<br />
+						<span id="estimatedPrintTime"></span><br />
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-12">
+						<div id="tempgraph" class="border" >
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-12">
+							<img id="thumbnail" src="/static/img/graph-background.png" />
+						</div>
+					</div>
 				</div>
 			</div>
-		</div>
-		<div class="row">
-			<div class="col border py-3">
-				<b>Elapsed:</b>&nbsp;<br />
-				<span id="printTime"></span><br />
-			</div>
-			<div class="col border py-3">
-				<b>Remaining:</b>&nbsp;<br />
-				<span id="printTimeLeft"></span><br />
-			</div>
-			<div class="col border py-3">
-				<b>Estimated:</b>&nbsp;<br />
-				<span id="estimatedPrintTime"></span><br />
+			<div class="span8">
+				<img id="webcam" src="#" />
 			</div>
 		</div>
+        <div id="footer" class="row-fluid">
+			<div id="clock" class="h3 d-inline-block px-3 py-2 m-0 rounded bg-dark text-monospace"></div>
+		</div>
 	</div>
-	<div id="tempgraph" class="border mx-2" style="width:464px;">
-	</div>
-	<img id="thumbnail" style="position: fixed; left: 0px; bottom: 0px" class="mx-auto" src="/static/img/graph-background.png" />
-</div>
-<div>
-    <img src="/webcam/?action=stream" style="width: 1440px; position: fixed; right:0px; top: 0px;" />
-</div>
-<div id="header">
-	<div id="filename" class="h3 d-inline-block px-3 py-2 m-0 rounded bg-dark text-monospace">Let's Print Some Stuff!</div>
-</div>
-<div id="footer">
-	<div id="clock" class="h3 d-inline-block px-3 py-2 m-0 rounded bg-dark text-monospace"></div>
-</div>
+	<script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+	<script>
+		var clock = document.getElementById("clock");
 
-<script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
-<script>
-
-	var clock = document.getElementById("clock");
-
-	setInterval(function() {
-		clock.innerText = moment().format('');
-	}, 1000);
-
-</script>
+		setInterval(function() {
+			clock.innerText = moment().format('');
+		}, 1000);
+	</script>
 </body>
 </html>
 
